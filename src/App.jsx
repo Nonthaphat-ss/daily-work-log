@@ -164,8 +164,11 @@ function App() {
 
   const handleExportWord = async () => {
     try {
-      const response = await fetch('/template.docx');
-      if (!response.ok) throw new Error('ไม่พบไฟล์ template.docx ในโฟลเดอร์ public');
+      const response = await fetch(`${import.meta.env.BASE_URL}template.docx`);
+
+      if (!response.ok) {
+        throw new Error(`ไม่พบไฟล์ template.docx (สถานะ: ${response.status})`);
+      }
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
       const zip = new PizZip(arrayBuffer);
