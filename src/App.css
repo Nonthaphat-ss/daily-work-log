@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes staggerFade {
+    0% {
+        opacity: 0;
+        transform: translateY(-15px) scale(0.98);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.stagger-item {
+    opacity: 0;
+    animation: staggerFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.architectural-grid {
+    background-color: #0c0c0e;
+    /* สีดำเข้มพรีเมียม */
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    /* ขนาดความกว้างของช่องตาราง (ปรับตัวเลขนี้ได้ตามชอบ) */
+}
