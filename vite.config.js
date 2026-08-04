@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon512.png'],
+      includeAssets: ['icon512.jpg'],
       manifest: {
         name: 'Daily Work',
         short_name: 'Daily Work',
@@ -18,12 +18,12 @@ export default defineConfig({
         theme_color: '#000000',
         icons: [
           {
-            src: 'icon512.png',
+            src: 'icon512.jpg',
             sizes: '180x180',
-            type: 'image/png'
+            type: 'image/jpg'
           },
           {
-            src: 'icon512.png',
+            src: 'icon512.jpg',
             sizes: '512x512',
             type: 'image/png'
           }
