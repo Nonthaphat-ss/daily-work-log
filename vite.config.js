@@ -19,13 +19,13 @@ export default defineConfig({
         icons: [
           {
             src: 'icon512.jpg',
-            sizes: '180x180',
-            type: 'image/jpg'
+            sizes: '192x192',
+            type: 'image/jpeg'
           },
           {
             src: 'icon512.jpg',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/jpeg'
           }
         ]
       }
