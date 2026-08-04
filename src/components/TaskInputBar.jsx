@@ -1,5 +1,5 @@
 // src/components/TaskInputBar.jsx
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Plus, Check, Calendar as CalendarIcon } from 'lucide-react';
 import { getDaysInMonth, isWeekend, thaiMonths } from '../utils/dateUtils';
 
@@ -9,14 +9,24 @@ export default function TaskInputBar({
     const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
     const [successAnim, setSuccessAnim] = useState(false);
 
+    // 1. เพิ่ม useRef สำหรับควบคุมความสูงของกล่องข้อความ
+    const textareaRef = useRef(null);
+
     const handleAddWithAnimation = () => {
         if (taskInput.day && taskInput.description) {
             handleAddTask();
             setSuccessAnim(true);
-            // เอฟเฟกต์ฟองอากาศจะเล่นประมาณ 500ms แล้วยุบตัวกลับปกติอย่างนุ่มนวล
             setTimeout(() => setSuccessAnim(false), 500);
         }
     };
+
+    // 2. เพิ่ม useEffect เพื่อคำนวณและปรับความสูงของกล่องข้อความอัตโนมัติ
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto'; // คืนค่าก่อนเพื่อวัดขนาดใหม่
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`; // ขยายสุดที่ 120px
+        }
+    }, [taskInput.description]);
 
     const reportParts = (docData.reportMonth || '').split(' ');
     const parsedMonth = reportParts[0] || 'มกราคม';
@@ -34,14 +44,12 @@ export default function TaskInputBar({
     return (
         <div className="w-full relative z-20 flex flex-col items-center">
 
-            {/* กล่อง input หลัก: ขยายพองตัวรับฟองอากาศ */}
-            <div className={`rounded-full p-2 flex items-center w-full transition-all duration-300 ease-out ${successAnim
-                    ? 'scale-[1.03] ring-4 ring-emerald-400/40 bg-emerald-50/50 border-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
-                    : 'bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.08)] hover:shadow-xl'
-                } ${isMobile ? 'gap-2 relative z-10 max-w-[500px]' : 'max-w-[450px]'}`}>
+            {/* 🌟 กล่อง input หลัก: เปลี่ยน items-center เป็น items-end และเพิ่ม focus-within animation */}
+            <div className={`bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.08)] hover:shadow-xl rounded-[28px] p-2 flex items-end w-full transition-all duration-300 focus-within:scale-[1.01] focus-within:ring-4 focus-within:ring-[#0066cc]/15 focus-within:border-[#0066cc]/40 focus-within:shadow-[0_15px_35px_rgba(0,102,204,0.12)] ${isMobile ? 'gap-2 relative z-10 max-w-[500px]' : 'max-w-[450px]'
+                }`}>
 
                 {isMobile ? (
-                    <div className="relative flex-none w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center font-bold text-[#1d1d1f]">
+                    <div className="relative flex-none w-10 h-10 mb-1 bg-gray-50 rounded-full flex items-center justify-center font-bold text-[#1d1d1f]">
                         {taskInput.day || '?'}
                         <select value={taskInput.day || ''} onChange={(e) => setTaskInput({ ...taskInput, day: e.target.value })} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                             <option value="">?</option>
@@ -49,7 +57,7 @@ export default function TaskInputBar({
                         </select>
                     </div>
                 ) : (
-                    <div className="relative flex-none w-[120px] h-[48px] flex justify-center items-center pr-2 border-r border-gray-200 font-medium text-[#1d1d1f] hover:bg-gray-50 transition-colors rounded-l-full cursor-pointer group" onClick={() => setIsDateMenuOpen(!isDateMenuOpen)}>
+                    <div className="relative flex-none w-[120px] h-[48px] mb-1 flex justify-center items-center pr-2 border-r border-gray-200 font-medium text-[#1d1d1f] hover:bg-gray-50 transition-colors rounded-l-full cursor-pointer group" onClick={() => setIsDateMenuOpen(!isDateMenuOpen)}>
                         <div className="flex items-center gap-2">
                             <CalendarIcon size={16} className="text-gray-400 group-hover:text-[#0066cc] transition-colors" />
                             <span className="truncate">{taskInput.day ? `วันที่ ${taskInput.day}` : 'เลือกวันที่'}</span>
@@ -86,39 +94,70 @@ export default function TaskInputBar({
                     </div>
                 )}
 
-                <input
-                    type="text"
+                {/* 🌟 เปลี่ยนจาก input เป็น textarea แบบขยายอัตโนมัติ */}
+                <textarea
+                    ref={textareaRef}
+                    rows={1}
                     value={taskInput.description || ''}
                     onChange={(e) => setTaskInput({ ...taskInput, description: e.target.value })}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddWithAnimation()}
+                    onKeyDown={(e) => {
+                        // กด Enter (โดยไม่กด Shift) เพื่อเพิ่มงาน
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleAddWithAnimation();
+                        }
+                    }}
                     placeholder={isMobile ? "รายละเอียดงาน..." : "รายละเอียดงานที่ปฏิบัติ..."}
-                    className={`flex-1 bg-transparent py-2 outline-none text-[#1d1d1f] placeholder-gray-400 transition-all ${isMobile ? 'px-3 text-[16px] min-w-0' : 'px-5 text-[16px]'}`}
+                    className={`flex-1 bg-transparent py-3 outline-none text-[#1d1d1f] placeholder-gray-400 resize-none overflow-y-auto leading-relaxed transition-all custom-scrollbar ${isMobile ? 'px-3 text-[16px] min-w-0' : 'px-5 text-[16px]'}`}
+                    style={{ minHeight: '48px', maxHeight: '120px' }}
                 />
 
-                {/* 🫧 ปุ่ม Add แบบ Bubble Pop Effect */}
+                {/* ปุ่ม Add แบบ Border Trace & Burst Effect */}
                 <button
                     onClick={handleAddWithAnimation}
-                    className={`relative overflow-hidden flex-none text-white flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${successAnim
-                            ? 'bg-emerald-500 scale-110 shadow-[0_0_20px_rgba(16,185,129,0.6),inset_0_0_8px_rgba(255,255,255,0.8)] rounded-full'
-                            : 'bg-[#1d1d1f] hover:bg-[#0066cc] hover:shadow-lg rounded-full'
-                        } ${isMobile ? 'w-10 h-10' : 'px-6 h-[48px] font-medium gap-2'}`}
+                    className={`relative flex-none mb-1 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95 ${successAnim ? 'bg-transparent' : 'bg-[#1d1d1f] hover:bg-[#2a2a2c] shadow-md'
+                        } ${isMobile ? 'w-10 h-10' : 'px-6 h-[48px] font-medium'}`}
                 >
-                    {/* วงแหวนฟองอากาศกระจายออก (Ripple / Ping Effect) */}
+                    {/* --- 1. เอฟเฟคแสงวิ่งรอบขอบ (Border Trace) --- */}
                     {successAnim && (
-                        <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-60 pointer-events-none"></span>
+                        <div className="absolute inset-0 rounded-full overflow-hidden p-[2px]">
+                            {/* กล่องสีเขียวที่หมุนติ้วๆ อยู่ข้างหลัง */}
+                            <div className="absolute top-1/2 left-1/2 w-[250%] h-[250%] bg-[conic-gradient(transparent_70%,#10b981_100%)] animate-spin-border"></div>
+                        </div>
                     )}
 
-                    {successAnim ? (
-                        <div className="relative z-10 flex items-center gap-1.5 transition-transform duration-300 scale-110">
-                            <Check size={18} className="text-white" />
-                            {!isMobile && <span className="font-bold tracking-wide">Added!</span>}
-                        </div>
-                    ) : (
-                        <div className="relative z-10 flex items-center gap-1.5">
-                            <Plus size={18} />
-                            {!isMobile && 'Add'}
-                        </div>
+                    {/* --- 2. สีพื้นหลังด้านในปุ่ม (ทับแสงหมุนไว้ให้เหลือแค่ขอบ) --- */}
+                    <div className={`absolute inset-[2px] rounded-full flex items-center justify-center transition-colors duration-300 ${successAnim ? 'bg-emerald-500' : 'bg-transparent'
+                        }`}></div>
+
+                    {/* --- 3. ขีดระเบิด (Particle Burst) --- */}
+                    {successAnim && (
+                        <svg className="absolute w-[180%] h-[180%] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-burst" viewBox="0 0 100 100">
+                            <line x1="50" y1="28" x2="50" y2="8" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="50" y1="72" x2="50" y2="92" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="28" y1="50" x2="8" y2="50" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="72" y1="50" x2="92" y2="50" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="34" y1="34" x2="20" y2="20" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="66" y1="66" x2="80" y2="80" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="66" y1="34" x2="80" y2="20" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="34" y1="66" x2="20" y2="80" stroke="#10b981" strokeWidth="4" strokeLinecap="round" />
+                        </svg>
                     )}
+
+                    {/* --- 4. ข้อความและไอคอน --- */}
+                    <div className="relative z-10 flex items-center gap-1.5 text-white">
+                        {successAnim ? (
+                            <>
+                                <Check size={18} />
+                                {!isMobile && <span className="font-bold tracking-wide">Finish</span>}
+                            </>
+                        ) : (
+                            <>
+                                <Plus size={18} />
+                                {!isMobile && 'Add'}
+                            </>
+                        )}
+                    </div>
                 </button>
             </div>
 

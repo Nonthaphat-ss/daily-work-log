@@ -28,3 +28,43 @@
     background-size: 40px 40px;
     /* ขนาดความกว้างของช่องตาราง (ปรับตัวเลขนี้ได้ตามชอบ) */
 }
+
+
+.animate-modal-pop {
+    animation: modal-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes burst-lines {
+    0% {
+        transform: scale(0.3);
+        /* เริ่มจากจุดเล็กๆ */
+        opacity: 1;
+        /* เข้มเต็มที่ */
+    }
+
+    100% {
+        transform: scale(1.4);
+        /* ขยายใหญ่พุ่งออกไป */
+        opacity: 0;
+        /* จางหายไป */
+    }
+}
+
+.animate-burst {
+    animation: burst-lines 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes spin-border {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+.animate-spin-border {
+
+    animation: spin-border 1.5s linear infinite;
+}

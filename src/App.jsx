@@ -308,44 +308,83 @@ function App() {
         />
       </div>
 
-      <main className="relative z-10 bg-white/90 backdrop-blur-md rounded-t-[40px] shadow-[0_-20px_40px_rgba(0,0,0,0.05)] border-t border-white/50 flex-1 w-full pt-8 px-4">
+      <main className="relative z-10 bg-white/90 backdrop-blur-md rounded-t-[40px] shadow-[0_-20px_40px_rgba(0,0,0,0.05)] border-t border-white/50 flex-1 w-full pt-8 px-4 pb-10">
+
+        {/* 1. ปุ่มกดเปิดเอกสาร (แก้ให้คลิกแล้วเปิด Modal) */}
         <div className="max-w-[500px] mx-auto mb-6">
-          <button onClick={() => setIsMobilePreviewOpen(!isMobilePreviewOpen)} className="w-full bg-[#1d1d1f] shadow-lg text-white px-6 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 text-[15px]">
-            {isMobilePreviewOpen ? (<><List size={18} /> กลับไปแก้ไขรายการ</>) : (<><FileText size={18} /> 👀 ดูตัวอย่างเอกสาร (A4)</>)}
+          <button
+            onClick={() => setIsMobilePreviewOpen(true)}
+            className="w-full bg-[#1d1d1f] shadow-lg text-white px-6 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 text-[15px]"
+          >
+            <FileText size={18} /> 👀 ดูตัวอย่างเอกสาร (A4)
           </button>
         </div>
 
-        {!isMobilePreviewOpen ? (
-          <div className="max-w-[500px] mx-auto flex flex-col gap-3">
-            <div className="text-center text-gray-500 text-[12px] font-semibold mb-1 uppercase tracking-widest">-- Task List --</div>
-            {pages.length === 0 || pages.every(p => p.length === 0) ? (
-              <div className="text-center text-gray-400 text-sm mt-4 italic">ยังไม่มีรายการปฏิบัติงาน</div>
-            ) : (
-              pages.map((pageContent) => pageContent.map(({ day, dayTasks }) => dayTasks.map((task) => (
-                <div key={task.id} className="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex flex-col gap-2 relative overflow-hidden active:scale-[0.98] transition-transform">
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#1d1d1f]"></div>
-                  <div className="flex justify-between items-center ml-2">
-                    <span className="font-bold text-[#1d1d1f] bg-gray-100/80 px-3 py-1 rounded-lg text-[14px]">วันที่ {day}</span>
-                    <button onClick={() => handleDeleteTask(task.id)} className="text-gray-400 p-2 -mr-2"><Trash2 size={18} /></button>
-                  </div>
-                  <p onClick={() => handleTaskClick(task)} className="text-gray-700 text-[15px] ml-2 mt-1 leading-relaxed">{task.description}</p>
+        {/* 2. Task List (เอาเงื่อนไขซ่อน/แสดงออก ให้มันโชว์ตลอดเวลา) */}
+        <div className="max-w-[500px] mx-auto flex flex-col gap-3">
+          <div className="text-center text-gray-500 text-[12px] font-semibold mb-1 uppercase tracking-widest">-- Task List --</div>
+          {pages.length === 0 || pages.every(p => p.length === 0) ? (
+            <div className="text-center text-gray-400 text-sm mt-4 italic">ยังไม่มีรายการปฏิบัติงาน</div>
+          ) : (
+            pages.map((pageContent) => pageContent.map(({ day, dayTasks }) => dayTasks.map((task) => (
+              <div key={task.id} className="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex flex-col gap-2 relative overflow-hidden active:scale-[0.98] transition-transform">
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#1d1d1f]"></div>
+                <div className="flex justify-between items-center ml-2">
+                  <span className="font-bold text-[#1d1d1f] bg-gray-100/80 px-3 py-1 rounded-lg text-[14px]">วันที่ {day}</span>
+                  <button onClick={() => handleDeleteTask(task.id)} className="text-gray-400 p-2 -mr-2"><Trash2 size={18} /></button>
                 </div>
-              ))))
-            )}
-          </div>
-        ) : (
-          <div className="pb-8 overflow-x-auto flex flex-col items-center">
-            <A4Document currentPage={currentPage} pages={pages} docData={docData} handleTextClick={handleTextClick} handleTaskClick={handleTaskClick} handleDeleteTask={handleDeleteTask} />
-            {pages.length > 1 && (
-              <div className="flex justify-center items-center gap-6 mt-6">
-                <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className={`p-3 rounded-full transition-all ${currentPage === 0 ? 'text-gray-300 bg-gray-50' : 'text-[#1d1d1f] bg-white shadow-md'}`}><ChevronLeft size={20} /></button>
-                <span className="font-bold text-[14px] text-gray-500 tracking-wider">PAGE {currentPage + 1} / {pages.length}</span>
-                <button onClick={() => setCurrentPage(p => Math.min(pages.length - 1, p + 1))} disabled={currentPage === pages.length - 1} className={`p-3 rounded-full transition-all ${currentPage === pages.length - 1 ? 'text-gray-300 bg-gray-50' : 'text-[#1d1d1f] bg-white shadow-md'}`}><ChevronRight size={20} /></button>
+                <p onClick={() => handleTaskClick(task)} className="text-gray-700 text-[15px] ml-2 mt-1 leading-relaxed">{task.description}</p>
               </div>
-            )}
-          </div>
-        )}
+            ))))
+          )}
+        </div>
       </main>
+
+      {/* 3. 🌟 โค้ด Modal หน้าต่างเด้งพรีวิวเอกสาร (ดีไซน์ใหม่ ไร้กรอบ ขยายใหญ่ เลื่อนได้พอดี) */}
+      {isMobilePreviewOpen && (
+        <div className="fixed inset-0 z-[1000] flex flex-col items-center bg-black/85 backdrop-blur-sm animate-modal-pop overflow-hidden">
+
+          {/* ปุ่ม ✕ ลอยอยู่มุมขวาบนเด่นๆ */}
+          <button
+            onClick={() => setIsMobilePreviewOpen(false)}
+            className="absolute top-4 right-4 z-[1010] w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 transition-all active:scale-90 shadow-lg"
+          >
+            <span className="text-xl leading-none -mt-0.5">✕</span>
+          </button>
+
+          {/* พื้นที่แสดงเอกสาร (ระบบ Scroll เลื่อนขึ้น-ลงได้) */}
+          <div className="flex-1 w-full overflow-y-auto overflow-x-hidden pt-20 pb-32 flex justify-center items-start custom-scrollbar">
+
+            {/* 🔴 กล่องครอบที่ล็อคความสูง-กว้างให้เท่ากับขนาด 48% เป๊ะๆ (แก้ปัญหาเลื่อนทะลุ) */}
+            <div
+              className="relative shadow-2xl bg-white"
+              style={{ width: 'calc(210mm * 0.48)', height: 'calc(297mm * 0.48)' }}
+            >
+              {/* กระดาษ A4 ถูกจับให้ชิดซ้ายบน (origin-top-left) เพื่อไม่ให้ตำแหน่งเพี้ยนเวลาใส่กล่องครอบ */}
+              <div className="absolute top-0 left-0 transform scale-[0.48] origin-top-left">
+                <A4Document
+                  currentPage={currentPage}
+                  pages={pages}
+                  docData={docData}
+                  handleTextClick={handleTextClick}
+                  handleTaskClick={handleTaskClick}
+                  handleDeleteTask={handleDeleteTask}
+                />
+              </div>
+            </div>
+
+          </div>
+
+          {/* ปุ่มเปลี่ยนหน้า (ลอยอยู่ด้านล่างสุดของจอ) */}
+          {pages.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex justify-center items-center gap-6 py-2 px-6 bg-black/60 backdrop-blur-md border border-white/20 rounded-full z-10 shadow-xl">
+              <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className={`p-2 rounded-full transition-all ${currentPage === 0 ? 'text-gray-500' : 'text-white hover:bg-white/20 active:scale-90'}`}><ChevronLeft size={20} /></button>
+              <span className="font-bold text-[14px] text-gray-300 tracking-wider">PAGE {currentPage + 1} / {pages.length}</span>
+              <button onClick={() => setCurrentPage(p => Math.min(pages.length - 1, p + 1))} disabled={currentPage === pages.length - 1} className={`p-2 rounded-full transition-all ${currentPage === pages.length - 1 ? 'text-gray-500' : 'text-white hover:bg-white/20 active:scale-90'}`}><ChevronRight size={20} /></button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
