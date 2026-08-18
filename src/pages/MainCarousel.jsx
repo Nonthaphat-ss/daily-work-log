@@ -3,25 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ColorBends from '../components/ColorBends';
 
-
 export default function MainCarousel() {
     const navigate = useNavigate();
 
     //  ตัวแปรเช็ค Responsive
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+    const images = import.meta.glob('../assets/torii/*.{png,jpg,jpeg}', { eager: true });
+
     //  ข้อมูลการ์ด 10 ใบ
     const cards = [
-        { uid: 0, title: 'Daily Work', subtitle: 'ระบบบันทึกงานประจำวัน (A4)', path: '/work-log', img: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=800&q=80' },
-        { uid: 1, title: 'Notes Board', subtitle: 'กระดานโน้ตแปะไอเดีย', path: '/notes', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' },
-        { uid: 2, title: 'Dashboard', subtitle: 'สรุปภาพรวมการทำงาน', path: '#', img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80' },
-        { uid: 3, title: 'Analytics', subtitle: 'สถิติและรายงานผล', path: '#', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80' },
-        { uid: 4, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=800&q=80' },
-        { uid: 5, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: 'https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=800&q=80' },
-        { uid: 6, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?auto=format&fit=crop&w=800&q=80' },
-        { uid: 7, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80' },
-        { uid: 8, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80' },
+        { uid: 0, title: 'Daily Work', subtitle: 'ระบบบันทึกงานประจำวัน (A4)', path: '/work-log', img: images['../assets/torii/Gate1.jpg']?.default },
+        { uid: 1, title: 'Notes Board', subtitle: 'กระดานโน้ตแปะไอเดีย', path: '/notes', img: images['../assets/torii/Gate2.jpg']?.default },
+        { uid: 2, title: 'Dashboard', subtitle: 'สรุปภาพรวมการทำงาน', path: '#', img: images['../assets/torii/Gate3.jpg']?.default },
+        { uid: 3, title: 'Analytics', subtitle: 'สถิติและรายงานผล', path: '#', img: images['../assets/torii/Gate4.jpg']?.default },
+        { uid: 4, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate5.jpg']?.default },
+        { uid: 5, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate6.jpg']?.default },
+        { uid: 6, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate7.jpg']?.default },
+        { uid: 7, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate8.jpg']?.default },
+        { uid: 8, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate9.jpg']?.default },
         { uid: 9, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: 'https://images.unsplash.com/photo-1620121692029-d088224ddc74?auto=format&fit=crop&w=800&q=80' }
+        //https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80 mock up img
     ];
 
     const totalCards = cards.length;

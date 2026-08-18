@@ -1,6 +1,6 @@
-// src/components/FloatingMenu.jsx
 import { useState } from 'react';
-import { Settings2, Edit3, Target, X, PlusCircle, CheckCircle2, ListTodo, Trash2, Download } from 'lucide-react';
+import { Settings2, Edit3, Target, X, PlusCircle, CheckCircle2, ListTodo, Trash2, Download, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function FloatingMenu({
     isMenuOpen, setIsMenuOpen, activePanel, setActivePanel,
@@ -11,9 +11,12 @@ export default function FloatingMenu({
     getTargetProgress, handleUseTarget, handleDeleteTarget,
     handleExportWord
 }) {
+
     const togglePanel = (panelName) => {
         setActivePanel(activePanel === panelName ? null : panelName);
     };
+
+    const navigate = useNavigate();
 
     return (
         <div className="absolute top-4 left-4 md:top-0 md:left-0 z-[100] font-sans">
@@ -29,6 +32,16 @@ export default function FloatingMenu({
             </button>
 
             <div className={`absolute top-0 left-0 flex flex-col gap-4 pt-16 z-40 ${isMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+
+                <button
+                    onClick={() => navigate('/')}
+                    className={`w-12 h-12 bg-white text-gray-700 border border-gray-100 rounded-full shadow-md flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-gray-100 hover:scale-110 active:scale-95 ${isMenuOpen ? 'translate-y-0 opacity-100 scale-100' : '-translate-y-10 opacity-0 scale-50'}`}
+                    style={{ transitionDelay: isMenuOpen ? '50ms' : '0ms' }}
+                    title="ย้อนกลับ"
+                >
+                    <ArrowLeft size={18} />
+                </button>
+
                 <button
                     onClick={() => togglePanel('edit')}
                     className={`w-12 h-12 bg-white text-[#0066cc] border border-gray-100 rounded-full shadow-md flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-gray-100 hover:scale-110 active:scale-95 ${isMenuOpen ? 'translate-y-0 opacity-100 scale-100' : '-translate-y-10 opacity-0 scale-50'}`}
@@ -57,6 +70,7 @@ export default function FloatingMenu({
                 >
                     <Download size={18} />
                 </button>
+
             </div>
 
             <div className={`absolute left-20 top-0 w-[350px] max-h-[85vh] overflow-y-auto custom-scrollbar bg-white/95 backdrop-blur-xl border border-gray-200 rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.15)] p-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top-left ${activePanel ? 'opacity-100 translate-x-0 scale-100 pointer-events-auto z-50' : 'opacity-0 -translate-x-10 scale-95 pointer-events-none -z-10'}`}>
