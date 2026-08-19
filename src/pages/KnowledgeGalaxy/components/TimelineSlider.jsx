@@ -1,27 +1,29 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
 export default function TimelineSlider({ minDate, maxDate, currentDate, onChange }) {
     if (minDate >= maxDate) return null;
 
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-11/12 max-w-lg bg-slate-900/80 backdrop-blur-xl border border-cyan-500/20 px-5 py-3 rounded-full shadow-2xl flex items-center gap-4 text-slate-200">
-            <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono shrink-0">
-                <Clock size={15} />
-                <span>TIMELINE</span>
+        <div className="bg-black/90 backdrop-blur-md border-t border-white/10 px-6 py-3 flex items-center justify-between gap-6 text-white select-none">
+            <div className="flex items-center gap-2 font-mono text-[10px] tracking-widest text-amber-400 uppercase shrink-0">
+                <Calendar size={14} />
+                <span>CHRONOLOGICAL FILTER</span>
             </div>
 
-            <input
-                type="range"
-                min={minDate}
-                max={maxDate}
-                value={currentDate}
-                onChange={(e) => onChange(Number(e.target.value))}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-            />
+            <div className="flex-1 max-w-xl">
+                <input
+                    type="range"
+                    min={minDate}
+                    max={maxDate}
+                    value={currentDate}
+                    onChange={(e) => onChange(Number(e.target.value))}
+                    className="w-full h-1 bg-white/20 rounded-none appearance-none cursor-pointer accent-amber-400"
+                />
+            </div>
 
-            <div className="font-mono text-xs text-slate-300 whitespace-nowrap">
-                {new Date(currentDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+            <div className="font-mono text-xs text-white/80 shrink-0">
+                {new Date(currentDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase()}
             </div>
         </div>
     );

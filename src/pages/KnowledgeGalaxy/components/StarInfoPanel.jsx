@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Edit3, Check, Calendar, Hash } from 'lucide-react';
+import { Edit3, Check, Trash2, X, Compass } from 'lucide-react';
 
 export default function StarInfoPanel({ star, categories, onClose, onUpdate, onDelete }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -33,120 +33,127 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
         );
     };
 
-    return (
-        <div className="fixed top-0 right-0 h-full w-full sm:w-[450px] z-50 bg-slate-900/90 backdrop-blur-2xl border-l border-cyan-500/20 text-slate-200 flex flex-col shadow-[-15px_0_35px_rgba(0,0,0,0.6)] animate-in slide-in-from-right duration-300">
+    const primaryCategory = categories.find(c => star.categoryIds?.includes(c.id));
 
-            <div className="p-4 border-b border-cyan-500/10 flex items-center justify-between bg-black/20">
-                <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="font-mono text-xs text-cyan-400 tracking-wider">NODE TELEMETRY</span>
+    return (
+        <div className="w-full bg-black/90 backdrop-blur-xl border-t border-white/15 text-white flex flex-col md:flex-row transition-all duration-300">
+
+            {/* ฝั่งซ้าย: ข้อมูลพิกัดและดาราศาสตร์ (Astronomical Coordinates) */}
+            <div className="p-6 md:w-80 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between shrink-0">
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                        <Compass size={18} className="text-amber-400" />
+                        <span className="font-mono text-[10px] tracking-widest text-amber-400 uppercase">
+                            POSITION DATA
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 font-mono">
+                        <div>
+                            <div className="text-[9px] text-white/40 tracking-wider">COORD (RA)</div>
+                            <div className="text-sm text-white/90">
+                                {star.position ? `${star.position[0].toFixed(2)}°` : '00.00°'}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-[9px] text-white/40 tracking-wider">COORD (DEC)</div>
+                            <div className="text-sm text-amber-400">
+                                {star.position ? `${star.position[1].toFixed(2)}°` : '00.00°'}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {isEditing ? (
-                        <button
-                            onClick={handleSave}
-                            className="p-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-white transition-colors"
-                            title="Save changes"
-                        >
-                            <Check size={16} />
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-white/5"
-                            title="Edit content"
-                        >
-                            <Edit3 size={16} />
-                        </button>
-                    )}
-
-                    <button
-                        onClick={() => onDelete(star.id)}
-                        className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-800 text-red-400 hover:text-white transition-colors border border-red-500/20"
-                        title="Delete node"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-
-                    <button
-                        onClick={onClose}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-white/5"
-                    >
-                        <X size={16} />
-                    </button>
+                <div className="mt-4 font-mono text-[10px] text-white/40">
+                    EPOCH: {new Date(star.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                <div>
-                    <div className="flex items-center gap-2 text-xs font-mono text-slate-400 mb-2">
-                        <Calendar size={13} />
-                        {new Date(star.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+            {/* ส่วนกลาง: สรุปค่าประเภทและคลัสเตอร์ (Telemetry Metrics) */}
+            <div className="p-6 md:w-72 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-center shrink-0">
+                <div className="grid grid-cols-2 gap-y-4 font-mono text-xs">
+                    <div>
+                        <div className="text-[9px] text-amber-400 tracking-widest uppercase mb-1">TYPE</div>
+                        <div className="text-white uppercase font-sans font-medium">Stellar Node</div>
                     </div>
-
-                    {isEditing ? (
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="w-full bg-slate-950/60 border border-slate-700 rounded-lg p-2.5 font-sans text-xl font-bold text-white outline-none focus:border-cyan-500"
-                        />
-                    ) : (
-                        <h2 className="font-sans text-2xl font-bold text-white tracking-tight leading-snug">
-                            {star.title}
-                        </h2>
-                    )}
+                    <div>
+                        <div className="text-[9px] text-amber-400 tracking-widest uppercase mb-1">PAYLOAD MASS</div>
+                        <div className="text-white">{star.content ? star.content.length : 0} BYTES</div>
+                    </div>
+                    <div className="col-span-2">
+                        <div className="text-[9px] text-amber-400 tracking-widest uppercase mb-1">CONSTELLATION / CLUSTER</div>
+                        <div className="flex items-center gap-1.5 text-white">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryCategory?.color || '#ffffff' }} />
+                            <span>{primaryCategory?.name || 'Unassigned'}</span>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
+            {/* ฝั่งขวา: รายละเอียดเนื้อหาและปุ่มจัดการ (Content & Actions) */}
+            <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                    <div className="flex items-center gap-1.5 text-xs font-mono text-cyan-400/80 mb-2.5">
-                        <Hash size={13} />
-                        ASSIGNED CLUSTERS
-                    </div>
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="w-full bg-black/60 border border-white/20 p-2 font-serif text-xl text-white outline-none focus:border-amber-400"
+                            />
+                        ) : (
+                            <h2 className="font-serif text-xl sm:text-2xl text-white tracking-wide uppercase">
+                                {star.title}
+                            </h2>
+                        )}
 
-                    <div className="flex flex-wrap gap-1.5">
-                        {categories.map(cat => {
-                            const isAssigned = isEditing
-                                ? selectedCatIds.includes(cat.id)
-                                : star.categoryIds?.includes(cat.id);
-
-                            if (!isEditing && !isAssigned) return null;
-
-                            return (
+                        <div className="flex items-center gap-2 shrink-0">
+                            {isEditing ? (
                                 <button
-                                    key={cat.id}
-                                    type="button"
-                                    disabled={!isEditing}
-                                    onClick={() => handleCatToggle(cat.id)}
-                                    className={`text-xs px-2.5 py-1 rounded-md font-mono border transition-all ${isAssigned
-                                            ? 'bg-slate-800 text-white border-cyan-400/80 shadow-[0_0_10px_rgba(56,189,248,0.15)]'
-                                            : 'bg-slate-950/40 text-slate-500 border-slate-800'
-                                        }`}
+                                    onClick={handleSave}
+                                    className="p-1.5 bg-amber-400 text-black hover:bg-amber-300 transition-colors"
+                                    title="Save Changes"
                                 >
-                                    <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: cat.color }} />
-                                    {cat.name}
+                                    <Check size={16} />
                                 </button>
-                            );
-                        })}
-                    </div>
-                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="p-1.5 text-white/60 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+                                    title="Edit Node"
+                                >
+                                    <Edit3 size={16} />
+                                </button>
+                            )}
 
-                <div>
-                    <div className="text-xs font-mono text-slate-400 mb-2 uppercase">
-                        Knowledge Specification
+                            <button
+                                onClick={() => onDelete(star.id)}
+                                className="p-1.5 text-red-400/80 hover:text-red-400 border border-red-500/20 hover:border-red-500/40 transition-colors"
+                                title="Delete Node"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+
+                            <button
+                                onClick={onClose}
+                                className="p-1.5 text-white/60 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+                                title="Close Panel"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
                     </div>
 
                     {isEditing ? (
                         <textarea
-                            rows={12}
+                            rows={3}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            className="w-full bg-slate-950/60 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 leading-relaxed outline-none focus:border-cyan-500 resize-none font-sans"
+                            className="w-full bg-black/60 border border-white/20 p-2 text-sm text-white/90 outline-none focus:border-amber-400 resize-none font-thai leading-relaxed"
                         />
                     ) : (
-                        <div className="bg-slate-950/40 border border-white/5 rounded-xl p-4 text-sm text-slate-300 leading-relaxed font-sans whitespace-pre-wrap">
-                            {star.content || 'No details recorded for this node.'}
+                        <div className="border-l-2 border-amber-400 pl-4 py-1 text-sm text-white/80 font-thai leading-relaxed max-h-24 overflow-y-auto">
+                            {star.content || 'No knowledge payload specified for this node.'}
                         </div>
                     )}
                 </div>

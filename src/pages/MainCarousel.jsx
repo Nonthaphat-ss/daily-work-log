@@ -71,7 +71,7 @@ export default function MainCarousel() {
                 requestAnimationFrame(step);
             } else {
                 setIsIntroDone(true);
-                isIntroDoneRef.current = true; // 🔧 อัปเดต Ref ให้ Loop รู้ว่าคลี่เสร็จแล้ว
+                isIntroDoneRef.current = true; //  อัปเดต Ref ให้ Loop รู้ว่าคลี่เสร็จแล้ว
             }
         };
         requestAnimationFrame(step);
