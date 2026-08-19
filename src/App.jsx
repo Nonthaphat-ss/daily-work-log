@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 const MainCarousel = lazy(() => import('./pages/MainCarousel'));
 const WorkLog = lazy(() => import('./pages/WorkLog'));
 const Notes = lazy(() => import('./pages/Notes'));
+import KnowledgeGalaxy from './pages/KnowledgeGalaxy';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/" element={<MainCarousel />} />
         <Route path="/work-log" element={<WorkLog />} />
         <Route path="/notes" element={<Notes />} />
+        <Route path="/galaxy" element={<KnowledgeGalaxy />} />
       </Routes>
     </Suspense>
   );

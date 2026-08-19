@@ -13,9 +13,9 @@ export default function MainCarousel() {
 
     //  ข้อมูลการ์ด 10 ใบ
     const cards = [
-        { uid: 0, title: 'Daily Work', subtitle: 'ระบบบันทึกงานประจำวัน (A4)', path: '/work-log', img: images['../assets/torii/Gate1.jpg']?.default },
+        { uid: 0, title: 'Daily Work', subtitle: 'ระบบบันทึกงานประจำวัน', path: '/work-log', img: images['../assets/torii/Gate1.jpg']?.default },
         { uid: 1, title: 'Notes Board', subtitle: 'กระดานโน้ตแปะไอเดีย', path: '/notes', img: images['../assets/torii/Gate2.jpg']?.default },
-        { uid: 2, title: 'Dashboard', subtitle: 'สรุปภาพรวมการทำงาน', path: '#', img: images['../assets/torii/Gate3.jpg']?.default },
+        { uid: 2, title: 'Milky Way', subtitle: 'จักรวาล?', path: '/galaxy', img: images['../assets/torii/Gate3.jpg']?.default },
         { uid: 3, title: 'Analytics', subtitle: 'สถิติและรายงานผล', path: '#', img: images['../assets/torii/Gate4.jpg']?.default },
         { uid: 4, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate5.jpg']?.default },
         { uid: 5, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate6.jpg']?.default },

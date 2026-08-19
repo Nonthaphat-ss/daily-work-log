@@ -21,7 +21,7 @@ export default function Notes() {
     const containerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(1200);
     const [isInteracting, setIsInteracting] = useState(false);
-
+    const [selectedNote, setSelectedNote] = useState(null);
     //  State สำหรับเมนูลอย
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activePanel, setActivePanel] = useState(null);
@@ -248,6 +248,7 @@ export default function Notes() {
                             className="group relative rounded-[20px] shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-black/5 dark:border-white/10 flex flex-col overflow-visible transition-all"
                             onClick={(e) => {
                                 e.stopPropagation();
+                                setSelectedNote(note);
                                 setActiveDropdown({ noteId: null, type: null });
                             }}
                         >
@@ -270,34 +271,24 @@ export default function Notes() {
                                 <GripHorizontal size={18} />
                             </div>
 
-                            {/* 📝 พื้นที่กระดาษ */}
+                            {/* 📝 พื้นที่กระดาษ (Preview: ตัดคำด้วย ... อัตโนมัติเมื่อข้อความยาวเกิน) */}
                             <div
-                                className="cancel-drag flex-1 overflow-hidden flex flex-col relative z-10 bg-transparent"
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onTouchStart={(e) => e.stopPropagation()}
+                                className="flex-1 px-6 py-2 overflow-hidden flex flex-col justify-start cursor-pointer select-none"
+                                onClick={() => setSelectedNote(note)}
                             >
-                                <input
-                                    type="text"
-                                    value={note.title || ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setNotes(prev => prev.map(n => n.id === note.id ? { ...n, title: val } : n));
-                                    }}
-                                    placeholder="หัวข้อ..."
-                                    className="cancel-drag w-full bg-transparent px-6 py-3 font-thai text-xl font-bold text-black dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 outline-none"
-                                />
-                                <hr className="border-black/5 dark:border-white/10 mx-5 shrink-0" />
+                                {/* หัวข้อ (ยาวเกินตัดเป็น ...) */}
+                                <h4 className={`font-thai text-xl font-bold truncate transition-colors ${isDarkMode ? 'text-white' : 'text-gray-900'
+                                    }`}>
+                                    {note.title || 'ไม่มีหัวข้อ'}
+                                </h4>
 
-                                <textarea
-                                    value={note.content || ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setNotes(prev => prev.map(n => n.id === note.id ? { ...n, content: val } : n));
-                                    }}
-                                    placeholder="พิมพ์รายละเอียดที่นี่..."
-                                    className="cancel-drag flex-1 w-full bg-transparent px-6 py-4 font-thai text-sm md:text-base text-gray-700 dark:text-gray-300 outline-none resize-none overflow-y-auto no-scrollbar cursor-text"
-                                />
+                                <hr className="border-black/5 dark:border-white/10 my-2 shrink-0" />
+
+                                {/* เนื้อหา (ยาวเกิน 4-5 บรรทัด ตัดเป็น ...) */}
+                                <p className={`font-thai text-sm leading-relaxed line-clamp-4 break-words whitespace-pre-wrap ${isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>
+                                    {note.content || 'ไม่มีรายละเอียด...'}
+                                </p>
                             </div>
 
                             {/* ⚙️ แถบเครื่องมือด้านล่าง */}
@@ -343,13 +334,203 @@ export default function Notes() {
                             </div>
 
                             {/* 📐 ปุ่มขยายขนาด */}
-                            <div className="absolute bottom-2 right-2 text-black/30 dark:text-white/30 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                            <div className="absolute bottom-2 right-2 text-black/30 dark:text-white/30 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
                                 <Maximize2 size={12} className="rotate-90" />
                             </div>
                         </div>
                     ))}
                 </Responsive>
             </div>
+            {/* =========================================================================
+    🪟 Modal ขยายโน้ต (ดีไซน์เดียวกับการ์ดหลัก + ปรับขนาดตามมือถือ)
+========================================================================= */}
+            <AnimatePresence>
+                {selectedNote && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 sm:p-6">
+                        {/* 🌑 พื้นหลังมืด (กดเพื่อบันทึกและปิดทันที) */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => {
+                                setSelectedNote(null);
+                                setActiveDropdown({ noteId: null, type: null });
+                            }}
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                        />
+
+                        {/* 📝 ตัวการ์ดขยายใหญ่ */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            style={{
+                                backgroundColor: isDarkMode
+                                    ? ((!selectedNote.color || selectedNote.color.toLowerCase() === '#ffffff') ? '#1e1e1e' : selectedNote.color)
+                                    : (selectedNote.color || '#ffffff')
+                            }}
+                            className="relative z-[201] w-full h-full sm:h-[85vh] sm:max-w-2xl sm:rounded-[28px] shadow-2xl flex flex-col overflow-hidden border border-black/5 dark:border-white/10"
+                            onClick={() => setActiveDropdown({ noteId: null, type: null })}
+                        >
+                            {/* 🎯 ส่วนหัวด้านบน: ปุ่มปิด & แท็ก */}
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 shrink-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    {selectedNote.activeTags?.map(tagId => {
+                                        const tagInfo = tags.find(t => t.id === tagId);
+                                        if (!tagInfo) return null;
+                                        return (
+                                            <span key={tagId} className="px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-sm font-thai" style={{ backgroundColor: tagInfo.color }}>
+                                                {tagInfo.name}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        setSelectedNote(null);
+                                        setActiveDropdown({ noteId: null, type: null });
+                                    }}
+                                    className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-gray-500 dark:text-gray-300 transition-colors cursor-pointer"
+                                    title="ปิดหน้าต่าง"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* ✍️ พื้นที่พิมพ์ข้อความ */}
+                            <div className="flex-1 p-6 flex flex-col overflow-y-auto no-scrollbar">
+                                <input
+                                    type="text"
+                                    value={selectedNote.title || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedNote(prev => ({ ...prev, title: val }));
+                                        setNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, title: val } : n));
+                                    }}
+                                    placeholder="หัวข้อ..."
+                                    className={`w-full bg-transparent font-thai text-2xl sm:text-3xl font-bold mb-3 outline-none ${isDarkMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
+                                        }`}
+                                />
+
+                                <hr className="border-black/5 dark:border-white/10 mb-4 shrink-0" />
+
+                                <textarea
+                                    value={selectedNote.content || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedNote(prev => ({ ...prev, content: val }));
+                                        setNotes(prev => prev.map(n => n.id === selectedNote.id ? { ...n, content: val } : n));
+                                    }}
+                                    placeholder="พิมพ์รายละเอียดที่นี่..."
+                                    className={`flex-1 w-full bg-transparent font-thai text-base sm:text-lg outline-none resize-none no-scrollbar cursor-text leading-relaxed ${isDarkMode ? 'text-gray-200 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400'
+                                        }`}
+                                />
+                            </div>
+
+                            {/* ⚙️ แถบเครื่องมือด้านล่าง */}
+                            <div className="relative px-6 py-4 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/10 shrink-0 flex items-center justify-between" onClick={e => e.stopPropagation()}>
+                                <div className="flex gap-2 relative">
+                                    {/* ลบ */}
+                                    <button
+                                        onClick={() => {
+                                            setNotes(notes.filter(n => n.id !== selectedNote.id));
+                                            setSelectedNote(null);
+                                        }}
+                                        className="p-2 rounded-xl hover:bg-red-100 dark:hover:bg-red-950/40 text-red-500 cursor-pointer transition-colors"
+                                        title="ลบ"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+
+                                    {/* ป้ายกำกับ */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setActiveDropdown({ noteId: activeDropdown.type === 'modal-tag' ? null : selectedNote.id, type: 'modal-tag' })}
+                                            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-amber-600 cursor-pointer transition-colors"
+                                            title="จัดการป้ายกำกับ"
+                                        >
+                                            <Tags size={18} />
+                                        </button>
+
+                                        {activeDropdown.type === 'modal-tag' && (
+                                            <div className="absolute bottom-full left-0 mb-2 w-[180px] bg-white dark:bg-[#2a2a2a] rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 flex flex-col gap-1 z-50">
+                                                <p className="text-xs text-gray-400 font-thai mb-1 px-1">แปะป้ายกำกับ</p>
+                                                {tags.length === 0 ? <p className="text-xs text-gray-400 px-1 font-thai">ยังไม่มี Tag ให้เลือก</p> :
+                                                    tags.map(tag => {
+                                                        const isChecked = selectedNote.activeTags?.includes(tag.id);
+                                                        return (
+                                                            <button
+                                                                key={tag.id}
+                                                                onClick={() => {
+                                                                    toggleTagOnNote(selectedNote.id, tag.id);
+                                                                    setSelectedNote(prev => ({
+                                                                        ...prev,
+                                                                        activeTags: isChecked
+                                                                            ? prev.activeTags.filter(id => id !== tag.id)
+                                                                            : [...(prev.activeTags || []), tag.id]
+                                                                    }));
+                                                                }}
+                                                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 text-sm font-thai cursor-pointer"
+                                                            >
+                                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }}></div>
+                                                                <span className="flex-1 text-left truncate dark:text-gray-200">{tag.name}</span>
+                                                                {isChecked && <CheckCircle2 size={14} className="text-green-500" />}
+                                                            </button>
+                                                        );
+                                                    })
+                                                }
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* เปลี่ยนสี */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setActiveDropdown({ noteId: activeDropdown.type === 'modal-color' ? null : selectedNote.id, type: 'modal-color' })}
+                                            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-blue-500 cursor-pointer transition-colors"
+                                            title="เปลี่ยนสี"
+                                        >
+                                            <Palette size={18} />
+                                        </button>
+
+                                        {activeDropdown.type === 'modal-color' && (
+                                            <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-[#2a2a2a] rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 flex gap-1.5 z-50">
+                                                {COLORS.notes.map(color => (
+                                                    <button
+                                                        key={color}
+                                                        onClick={() => {
+                                                            changeNoteColor(selectedNote.id, color);
+                                                            setSelectedNote(prev => ({ ...prev, color }));
+                                                        }}
+                                                        className="w-6 h-6 rounded-full border-2 border-transparent hover:scale-110 hover:border-gray-300 transition-all cursor-pointer shadow-inner"
+                                                        style={{ backgroundColor: color }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* เก็บ/ซ่อน */}
+                                    <button
+                                        onClick={() => {
+                                            const nextStatus = !selectedNote.isArchived;
+                                            setNotes(notes.map(n => n.id === selectedNote.id ? { ...n, isArchived: nextStatus } : n));
+                                            setSelectedNote(prev => ({ ...prev, isArchived: nextStatus }));
+                                        }}
+                                        className={`p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer ${selectedNote.isArchived ? 'text-amber-500' : 'text-gray-500 dark:text-gray-400'
+                                            }`}
+                                        title="เก็บ/ซ่อน"
+                                    >
+                                        <Archive size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
