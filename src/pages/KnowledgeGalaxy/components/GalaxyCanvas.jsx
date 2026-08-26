@@ -1,6 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Html, Line } from '@react-three/drei';
+import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { GALAXY_SETTINGS } from '../constants/galaxyConfig';
 
@@ -17,35 +17,29 @@ function StarNode({ star, categories, onSelect, isSelected }) {
 
     const starSize = useMemo(() => {
         const length = star.content ? star.content.length : 0;
-        const calculated = GALAXY_SETTINGS.minNodeSize + (length / GALAXY_SETTINGS.contentLengthDivisor);
-        return Math.min(calculated, GALAXY_SETTINGS.maxNodeSize);
+        const calculated = (GALAXY_SETTINGS.minNodeSize || 0.8) + (length / (GALAXY_SETTINGS.contentLengthDivisor || 500));
+        return Math.min(calculated, GALAXY_SETTINGS.maxNodeSize || 2.5);
     }, [star.content]);
 
-    // สุ่มค่า offset เพื่อให้จังหวะการกะพริบของแต่ละดวงดาวไม่พร้อมกัน
     const twinkleOffset = useMemo(() => Math.random() * 100, []);
 
-    useFrame(({ clock }) => {
-        const t = clock.getElapsedTime() * 2 + twinkleOffset;
+    // 🌟 ใช้ state.clock.getElapsedTime() แทน destructuring เพื่อแก้ Warning
+    useFrame((state) => {
+        const t = state.clock.getElapsedTime() * 2 + twinkleOffset;
         const pulse = Math.sin(t) * 0.08;
         const intensityFactor = hovered || isSelected ? 1.4 : 1.0;
 
         if (coreRef.current && bodyRef.current && coronaRef.current) {
             const currentScale = intensityFactor + pulse;
-
-            // แกนกลางสีขาว
             coreRef.current.scale.setScalar(currentScale * 0.45);
-
-            // ตัวดาวสีหมวดหมู่
             bodyRef.current.scale.setScalar(currentScale);
-
-            // ชั้นรัศมีแสงเรือง
             coronaRef.current.scale.setScalar(currentScale * 1.85);
         }
     });
 
     return (
         <group position={star.position}>
-            {/* 1. ชั้นรัศมีเรืองแสงกว้าง (Outer Corona / Stellar Halo) */}
+            {/* 1. Outer Corona */}
             <mesh ref={coronaRef}>
                 <sphereGeometry args={[starSize, 24, 24]} />
                 <meshBasicMaterial
@@ -58,7 +52,7 @@ function StarNode({ star, categories, onSelect, isSelected }) {
                 />
             </mesh>
 
-            {/* 2. เนื้อผิวดาวสีหมวดหมู่ (Photosphere Body) */}
+            {/* 2. Photosphere Body */}
             <mesh
                 ref={bodyRef}
                 onClick={(e) => {
@@ -86,7 +80,7 @@ function StarNode({ star, categories, onSelect, isSelected }) {
                 />
             </mesh>
 
-            {/* 3. แกนกลางดวงดาวสว่างสีขาวจ้า (White-Hot Core) */}
+            {/* 3. White-Hot Core */}
             <mesh ref={coreRef}>
                 <sphereGeometry args={[starSize, 16, 16]} />
                 <meshBasicMaterial
@@ -98,7 +92,7 @@ function StarNode({ star, categories, onSelect, isSelected }) {
                 />
             </mesh>
 
-            {/* ป้ายชื่อระบุดวงดาว */}
+            {/* ป้ายชื่อดาว (HTML ธรรมดา ไม่พึ่งฟอนต์ 3D ปลอดภัย 100%) */}
             <Html
                 position={[0, starSize * 2.2 + 0.6, 0]}
                 center
@@ -106,15 +100,81 @@ function StarNode({ star, categories, onSelect, isSelected }) {
                 className="pointer-events-none select-none transition-opacity duration-300"
             >
                 <div className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider whitespace-nowrap border backdrop-blur-md transition-all ${isSelected
-                        ? 'bg-cyan-950/90 text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)] scale-110 opacity-100'
-                        : hovered
-                            ? 'bg-slate-900/90 text-white border-slate-500 shadow-[0_0_8px_rgba(255,255,255,0.3)] opacity-100'
-                            : 'bg-black/60 text-slate-400 border-white/5 opacity-50'
+                    ? 'bg-cyan-950/90 text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)] scale-110 opacity-100'
+                    : hovered
+                        ? 'bg-slate-900/90 text-white border-slate-500 shadow-[0_0_8px_rgba(255,255,255,0.3)] opacity-100'
+                        : 'bg-black/60 text-slate-400 border-white/5 opacity-50'
                     }`}>
                     {star.title || 'Untitled Node'}
                 </div>
             </Html>
         </group>
+    );
+}
+
+// 🌟 เส้นเชื่อมแบบไล่สี (Gradient Plexus Lines) แทนแบบเก่า
+function ConstellationLines({ links, categories }) {
+    const linesGeometry = useMemo(() => {
+        const positions = [];
+        const colors = [];
+
+        links.forEach(link => {
+            const srcCat = categories.find(c => link.source.categoryIds?.includes(c.id));
+            const tgtCat = categories.find(c => link.target.categoryIds?.includes(c.id));
+            const c1 = new THREE.Color(srcCat ? srcCat.color : '#38bdf8');
+            const c2 = new THREE.Color(tgtCat ? tgtCat.color : '#38bdf8');
+
+            positions.push(...link.source.position, ...link.target.position);
+            colors.push(c1.r, c1.g, c1.b, c2.r, c2.g, c2.b);
+        });
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        return geometry;
+    }, [links, categories]);
+
+    return (
+        <lineSegments geometry={linesGeometry}>
+            <lineBasicMaterial
+                vertexColors
+                transparent
+                opacity={0.35}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+            />
+        </lineSegments>
+    );
+}
+
+// 🌟 เพิ่มฝุ่นอวกาศพื้นหลัง ให้ภาพดูมีมิติเหมือนใน Obsidian
+function CosmicDust() {
+    const dustGeometry = useMemo(() => {
+        const positions = new Float32Array(500 * 3);
+        const colors = new Float32Array(500 * 3);
+        const palette = ['#a855f7', '#00f2fe', '#10b981', '#ffffff'];
+
+        for (let i = 0; i < 500; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 150;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 150;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 150;
+
+            const color = new THREE.Color(palette[Math.floor(Math.random() * palette.length)]);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+        }
+
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        return geom;
+    }, []);
+
+    return (
+        <points geometry={dustGeometry}>
+            <pointsMaterial size={0.3} vertexColors transparent opacity={0.6} blending={THREE.AdditiveBlending} />
+        </points>
     );
 }
 
@@ -134,32 +194,9 @@ function GalaxyScene({ stars, categories, links, selectedStar, onSelectStar }) {
                 maxDistance={400}
             />
 
-            {/* เส้นเชื่อมโยงแบบ Constellation Rays */}
-            {links.map((link, idx) => {
-                const category = categories.find(c => link.sharedCategories.includes(c.id));
-                const lineColor = category ? category.color : '#38bdf8';
+            <CosmicDust />
+            <ConstellationLines links={links} categories={categories} />
 
-                return (
-                    <group key={`link-group-${idx}`}>
-                        <Line
-                            points={[link.source.position, link.target.position]}
-                            color={lineColor}
-                            lineWidth={1.2}
-                            transparent
-                            opacity={0.5}
-                        />
-                        <Line
-                            points={[link.source.position, link.target.position]}
-                            color={lineColor}
-                            lineWidth={3.0}
-                            transparent
-                            opacity={0.12}
-                        />
-                    </group>
-                );
-            })}
-
-            {/* รายการดวงดาวทั้งหมด */}
             {stars.map((star) => (
                 <StarNode
                     key={star.id}
