@@ -1,4 +1,4 @@
-import bgImg from '../assets/bgforweb.png';
+
 import '../App.css'
 import { useState, useEffect, useMemo } from 'react';
 

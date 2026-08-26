@@ -6,7 +6,14 @@ export default {
         "./src/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                thai: ['Prompt', 'sans-serif'],
+                newyork: ['"New York"', '"Playfair Display"', 'Georgia', 'serif'],
+                galaxy: ['Cinzel', 'serif'],
+                'mono-tech': ['"JetBrains Mono"', 'monospace'],
+            },
+        },
     },
     plugins: [],
 }

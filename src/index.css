@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+/* ซ่อน Scrollbar สำหรับ class no-scrollbar ที่ใช้ในโปรเจกต์ */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
