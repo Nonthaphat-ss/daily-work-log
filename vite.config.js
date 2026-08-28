@@ -65,5 +65,4 @@ export default defineConfig({
       }
     }
   },
-  base: '/daily-work-log/',
 })
