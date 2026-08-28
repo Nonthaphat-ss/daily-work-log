@@ -175,13 +175,40 @@ export default function WorkLog() {
             const blob = await response.blob();
             const arrayBuffer = await blob.arrayBuffer();
             const zip = new PizZip(arrayBuffer);
-            const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+            const doc = new Docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true // 🌟 สำคัญ: ทำให้รองรับการขึ้นบรรทัดใหม่ (\n) ใน Word
+            });
 
-            const exportTasks = tasks.sort((a, b) => Number(a.day) - Number(b.day)).map(task => ({
-                dayThai: toThaiNumber(task.day), description: task.description
-            }));
+            // 1. จัดกลุ่มงานตามวันที่
+            const grouped = tasks.reduce((acc, task) => {
+                const dayNum = Number(task.day);
+                if (!acc[dayNum]) acc[dayNum] = [];
+                acc[dayNum].push(task.description);
+                return acc;
+            }, {});
+
+            // 2. แปลงเป็นข้อมูลตาราง โดยวันเดียวกันจะรวมเป็น 1 แถวและขึ้นบรรทัดใหม่ด้วย -
+            const exportTasks = Object.keys(grouped)
+                .sort((a, b) => Number(a) - Number(b))
+                .map(day => {
+                    const dayTasks = grouped[day];
+                    // ถ้ามีมากกว่า 1 รายการในวันนั้น ให้ใส่ขีด - นำหน้าทุกข้อความ
+                    const formattedDesc = dayTasks.length > 1
+                        ? dayTasks.map(desc => `- ${desc}`).join('\n')
+                        : dayTasks[0];
+
+                    return {
+                        dayThai: toThaiNumber(day),
+                        description: formattedDesc
+                    };
+                });
+
             doc.render({ ...docData, tasks: exportTasks });
-            const out = doc.getZip().generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            const out = doc.getZip().generate({
+                type: 'blob',
+                mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            });
             saveAs(out, `บันทึกงาน_${docData.reportMonth}.docx`);
         } catch (error) {
             console.error(error);

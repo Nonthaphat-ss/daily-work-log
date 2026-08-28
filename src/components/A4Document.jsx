@@ -75,10 +75,18 @@ export default function A4Document({
                                 <td className="border border-black p-3 text-left align-top">
                                     {dayTasks.map((task) => (
                                         <div key={task.id} className="relative group pr-10 mb-2 last:mb-0">
-                                            <span onClick={() => handleTaskClick(task)} className="cursor-pointer hover:text-[#0066cc] hover:bg-[#0066cc]/5 px-1 rounded transition-colors block" title="คลิกเพื่อแก้ไขงานนี้">
+
+                                            <span
+                                                onClick={() => handleTaskClick(task)}
+                                                className="cursor-pointer hover:text-[#0066cc] hover:bg-[#0066cc]/5 px-1 rounded transition-colors block whitespace-pre-line"
+                                                title="คลิกเพื่อแก้ไขงานนี้"
+                                            >
                                                 - {task.description}
                                             </span>
-                                            <button onClick={() => handleDeleteTask(task.id)} className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all">
+                                            <button
+                                                onClick={() => handleDeleteTask(task.id)}
+                                                className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                            >
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>

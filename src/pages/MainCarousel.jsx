@@ -32,7 +32,7 @@ export default function MainCarousel() {
     const cards = [
         { uid: 0, title: 'Daily Work', subtitle: 'ระบบบันทึกงานประจำวัน', path: '/work-log', img: images['../assets/torii/Gate1.jpg']?.default },
         { uid: 1, title: 'Notes Board', subtitle: 'กระดานโน้ตแปะไอเดีย', path: '/notes', img: images['../assets/torii/Gate2.jpg']?.default },
-        { uid: 2, title: 'Milky Way', subtitle: 'จักรวาล?', path: '/galaxy', img: images['../assets/torii/Gate3.jpg']?.default },
+        { uid: 2, title: 'Nebula', subtitle: 'จัดเก็บดวงดาว', path: '/galaxy', img: images['../assets/torii/Gate3.jpg']?.default },
         { uid: 3, title: 'Analytics', subtitle: 'สถิติและรายงานผล', path: '#', img: images['../assets/torii/Gate4.jpg']?.default },
         { uid: 4, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate5.jpg']?.default },
         { uid: 5, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate6.jpg']?.default },
@@ -336,21 +336,58 @@ export default function MainCarousel() {
                 </>
             )}
 
-            {/* 🔴 นำ Modal มาวางไว้นอกสุด เพื่อให้ฝั่ง Desktop แสดงผลได้ */}
             {showLoginModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md">
-                    <form onSubmit={handleLoginSubmit} className="bg-white/90 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl w-[320px] flex flex-col gap-4 pointer-events-auto">
-                        <h2 className="text-xl font-bold text-center mb-2 text-[#1d1d1f]">System Access</h2>
-                        <input type="email" placeholder="Email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-black focus:outline-none focus:border-gray-500" required />
-                        <input type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-black focus:outline-none focus:border-gray-500" required />
-                        <div className="flex gap-2 mt-2">
-                            <button type="button" onClick={() => setShowLoginModal(false)} className="flex-1 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg transition-colors">Cancel</button>
-                            <button type="submit" className="flex-1 py-2 bg-[#1d1d1f] text-white font-bold hover:bg-black rounded-lg transition-colors">Login</button>
-                        </div>
-                    </form>
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md"
+                    onClick={() => setShowLoginModal(false)} // กดพื้นที่ว่างด้านนอกเพื่อปิด
+                >
+                    <div
+                        className="bg-white/95 backdrop-blur-xl border border-white/40 p-8 rounded-3xl shadow-2xl w-[340px] flex flex-col gap-4 pointer-events-auto transition-all"
+                        onClick={(e) => e.stopPropagation()} // ป้องกันไม่ให้คลิกข้างในกล่องแล้ว Modal ปิด
+                    >
+                        <h2 className="text-2xl font-serif font-bold text-center text-[#1d1d1f] mb-1">System Access</h2>
+                        <p className="text-xs text-gray-400 text-center -mt-3 mb-2">เข้าสู่ระบบเพื่อเชื่อมต่อข้อมูล Cloud</p>
+
+                        <form onSubmit={handleLoginSubmit} className="flex flex-col gap-3">
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                value={loginEmail}
+                                onChange={(e) => setLoginEmail(e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-black focus:outline-none focus:border-black transition-colors"
+                                required
+                            />
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                value={loginPassword}
+                                onChange={(e) => setLoginPassword(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleLoginSubmit(e);
+                                }}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-black focus:outline-none focus:border-black transition-colors"
+                                required
+                            />
+
+                            <div className="flex gap-2 mt-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLoginModal(false)}
+                                    className="flex-1 py-2.5 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-xl text-sm font-semibold transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-2.5 bg-[#1d1d1f] text-white rounded-xl text-sm font-semibold hover:bg-black transition-colors shadow-lg active:scale-95"
+                                >
+                                    Login
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
-
         </div>
     );
 }
