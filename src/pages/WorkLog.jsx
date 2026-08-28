@@ -1,22 +1,24 @@
-
 import '../App.css'
 import { useState, useEffect, useMemo } from 'react';
-
 import { ChevronLeft, ChevronRight, List, FileText, Trash2 } from 'lucide-react';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
-
 import { toThaiNumber, currentMonth, currentYear, getDaysInMonth, isWeekend, getThaiDayName } from '../utils/dateUtils';
 import FloatingMenu from '../components/FloatingMenu';
 import TaskInputBar from '../components/TaskInputBar';
 import A4Document from '../components/A4Document';
 import Orb from '../components/Orb';
 
+// 🌟 1. Import Firebase และ Auth ที่ต้องใช้
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
 // ==========================================
 // 🚀 WORK LOG COMPONENT
 // ==========================================
-export default function WorkLog() { // เปลี่ยนชื่อจาก App เป็น WorkLog
+export default function WorkLog() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
@@ -28,10 +30,13 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activePanel, setActivePanel] = useState(null);
     const [isMobilePreviewOpen, setIsMobilePreviewOpen] = useState(false);
-
-    // 🔴 State ควบคุมหน้ากระดาษปัจจุบัน
     const [currentPage, setCurrentPage] = useState(0);
 
+    // 🌟 2. ดึงสถานะ Auth เพื่อเช็คว่าล็อกอินอยู่หรือไม่
+    const { currentUser } = useAuth();
+    const [isLoadingDB, setIsLoadingDB] = useState(false);
+
+    // --- State ของข้อมูลหลัก (ดึง Local เป็นค่าเริ่มต้น) ---
     const [docData, setDocData] = useState(() => {
         const savedDocData = localStorage.getItem('smartWorkLog_docData');
         if (savedDocData) return JSON.parse(savedDocData);
@@ -44,6 +49,68 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
         };
     });
 
+    const [tasks, setTasks] = useState(() => {
+        const savedTasks = localStorage.getItem('smartWorkLog_tasks');
+        if (savedTasks) return JSON.parse(savedTasks);
+        return [];
+    });
+
+    const [targets, setTargets] = useState(() => {
+        const savedTargets = localStorage.getItem('smartWorkLog_targets');
+        if (savedTargets) return JSON.parse(savedTargets);
+        return [];
+    });
+
+    // 🌟 3. Effect สำหรับดึงข้อมูลจาก Cloud (Firestore) เมื่อผู้ใช้ล็อกอิน
+    useEffect(() => {
+        const fetchCloudData = async () => {
+            if (!currentUser) return; // ถ้าไม่ล็อกอิน ข้ามไปเลย
+            setIsLoadingDB(true);
+            try {
+                const docRef = doc(db, 'users', currentUser.uid, 'worklogs', 'current');
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.docData) setDocData(data.docData);
+                    if (data.tasks) setTasks(data.tasks);
+                    if (data.targets) setTargets(data.targets);
+                }
+            } catch (error) {
+                console.error("Error fetching cloud data:", error);
+            }
+            setIsLoadingDB(false);
+        };
+        fetchCloudData();
+    }, [currentUser]);
+
+    // 🌟 4. Effect บันทึกข้อมูลอัตโนมัติ (แยก Local / Cloud)
+    useEffect(() => {
+        // ห้ามเซฟทับกลับไปตอนที่เพิ่งดึงข้อมูลลงมา (ป้องกันข้อมูลหาย)
+        if (isLoadingDB) return;
+
+        if (currentUser) {
+            // โหมด Cloud: เซฟลง Firestore แบบหน่วงเวลา 1.5 วินาที
+            const saveDataToCloud = async () => {
+                try {
+                    const docRef = doc(db, 'users', currentUser.uid, 'worklogs', 'current');
+                    await setDoc(docRef, { docData, tasks, targets }, { merge: true });
+                } catch (error) {
+                    console.error("Error saving to cloud:", error);
+                }
+            };
+            const timeoutId = setTimeout(saveDataToCloud, 1500);
+            return () => clearTimeout(timeoutId);
+        } else {
+            // โหมด Local: เซฟลงเครื่องปกติ
+            localStorage.setItem('smartWorkLog_docData', JSON.stringify(docData));
+            localStorage.setItem('smartWorkLog_tasks', JSON.stringify(tasks));
+            localStorage.setItem('smartWorkLog_targets', JSON.stringify(targets));
+        }
+    }, [docData, tasks, targets, currentUser, isLoadingDB]);
+
+
+    // --- ฟังก์ชันการทำงานเดิมของแอป (คงไว้เหมือนเดิม 100%) ---
     const [activeField, setActiveField] = useState(null);
     const [editingTaskId, setEditingTaskId] = useState(null);
 
@@ -68,12 +135,6 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
 
     const handleInputChange = (e) => setDocData({ ...docData, [activeField]: toThaiNumber(e.target.value) });
 
-    const [tasks, setTasks] = useState(() => {
-        const savedTasks = localStorage.getItem('smartWorkLog_tasks');
-        if (savedTasks) return JSON.parse(savedTasks);
-        return [];
-    });
-
     const [taskInput, setTaskInput] = useState({ day: new Date().getDate().toString(), description: '' });
 
     const handleAddTask = () => {
@@ -89,11 +150,6 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
 
     const handleDeleteTask = (idToDelete) => setTasks(tasks.filter(task => task.id !== idToDelete));
 
-    const [targets, setTargets] = useState(() => {
-        const savedTargets = localStorage.getItem('smartWorkLog_targets');
-        if (savedTargets) return JSON.parse(savedTargets);
-        return [];
-    });
     const [newTargetName, setNewTargetName] = useState('');
     const [newTargetCount, setNewTargetCount] = useState('');
     const [isAddingTarget, setIsAddingTarget] = useState(false);
@@ -111,10 +167,6 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
         setTaskInput(prev => ({ ...prev, description: targetName }));
         if (isMobile) setIsMenuOpen(false);
     };
-
-    useEffect(() => { localStorage.setItem('smartWorkLog_docData', JSON.stringify(docData)); }, [docData]);
-    useEffect(() => { localStorage.setItem('smartWorkLog_tasks', JSON.stringify(tasks)); }, [tasks]);
-    useEffect(() => { localStorage.setItem('smartWorkLog_targets', JSON.stringify(targets)); }, [targets]);
 
     const handleExportWord = async () => {
         try {
@@ -163,7 +215,6 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
         return calculatedPages;
     }, [tasks]);
 
-    // ตรวจสอบเพื่อไม่ให้กระดาษค้างในหน้าตารางที่ถูกลบไปแล้ว
     useEffect(() => {
         if (currentPage >= pages.length && pages.length > 0) {
             setCurrentPage(pages.length - 1);
@@ -174,31 +225,19 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
     // 🧩 RENDER FUNCTIONS
     // ==========================================
 
-    // 💻 โซนสำหรับ Desktop
     const renderDesktopView = () => (
         <div className="flex w-full h-screen overflow-hidden architectural-grid">
-
-            {/* 🟢 ฝั่งซ้าย (40%): พื้นหลังหลัก */}
             <div className="w-[45%] min-w-[520px] h-full relative flex flex-col justify-center items-center p-6 bg-transparent z-30">
                 <div className="relative w-full max-w-[620px] h-[96%] max-h-[900px] bg-[#f8f7f4] rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white flex flex-col justify-center items-center px-12 transition-all group">
 
-                    {/* 🌟 WebGL Orb Effect (ลูกแก้ว 3D พื้นหลัง) */}
                     <div className="absolute inset-0 z-0 pointer-events-none rounded-[40px] overflow-hidden opacity-40">
-                        <Orb
-                            hoverIntensity={2}
-                            hue={0}
-                            forceHoverState={false}
-                            backgroundColor="#f8f7f4"
-                        />
+                        <Orb hoverIntensity={2} hue={0} forceHoverState={false} backgroundColor="#f8f7f4" />
                     </div>
-                    {/* เส้นตัด (Crosshairs) */}
                     <div className="absolute inset-0 pointer-events-none z-0 rounded-[40px] overflow-hidden">
                         <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-black/[0.03] -translate-x-1/2"></div>
                         <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-black/[0.03] -translate-y-1/2"></div>
                     </div>
 
-                    {/* 🔴 กรอบมุม 4 ด้าน */}
-                    {/* Top-Left: ตกแต่ง */}
                     <div className="absolute top-6 left-6 z-[60]">
                         <FloatingMenu
                             isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} activePanel={activePanel} setActivePanel={setActivePanel}
@@ -210,13 +249,12 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                             handleExportWord={handleExportWord}
                         />
                     </div>
-                    {/* Top-Right: ปุ่มล้างตาราง (CLEAR) */}
+
                     <button onClick={handleNewMonth} className="absolute top-6 right-6 group flex items-start gap-3 transition-all hover:scale-105 active:scale-95 z-40">
                         <span className="text-[10px] tracking-[0.2em] font-bold text-gray-300 group-hover:text-red-500 transition-colors uppercase mt-[-4px]">Clear</span>
                         <div className="w-8 h-8 border-t-[2px] border-r-[2px] border-black/20 group-hover:border-red-500 transition-colors"></div>
                     </button>
 
-                    {/* Bottom-Left: ปุ่มหน้าก่อนหน้า (PREV) */}
                     <button
                         onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                         disabled={currentPage === 0}
@@ -226,7 +264,6 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                         <span className={`text-[10px] tracking-[0.2em] font-bold text-gray-300 uppercase mb-[-4px] transition-colors ${currentPage !== 0 && 'group-hover:text-[#0066cc]'}`}>Prev</span>
                     </button>
 
-                    {/* Bottom-Right: ปุ่มหน้าถัดไป (NEXT) */}
                     <button
                         onClick={() => setCurrentPage(p => Math.min(pages.length - 1, p + 1))}
                         disabled={currentPage === pages.length - 1}
@@ -236,14 +273,12 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                         <div className={`w-8 h-8 border-b-[2px] border-r-[2px] border-black/20 transition-colors ${currentPage !== pages.length - 1 && 'group-hover:border-[#0066cc]'}`}></div>
                     </button>
 
-                    {/* Typography ชื่อเว็บแบบเล่นคำ หนา-บาง */}
                     <div className="flex flex-col items-center w-full relative z-20">
                         <div className="mb-10 text-center flex flex-col items-center">
                             <p className="text-[10px] tracking-[0.4em] text-gray-500 font-semibold uppercase mb-4"> Work Log for me</p>
                             <h1 className="text-[52px] font-black tracking-tighter text-[#1d1d1f] leading-[1.05] mb-4">
                                 <span className="font-light tracking-tight">Daily Work</span>
                             </h1>
-                            {/* จุดตกแต่งใต้ชื่อเว็บ */}
                             <div className="flex items-center justify-center gap-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#1d1d1f]"></div>
                                 <div className="h-[1px] w-12 bg-[#1d1d1f]"></div>
@@ -258,11 +293,9 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                             docData={docData}
                         />
                     </div>
-
                 </div>
             </div>
 
-            {/* 🟠 ฝั่งขวา (60%): โซนกระดาษ A4 */}
             <div className="w-[60%] flex-1 h-full overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center py-10 relative z-10 bg-transparent">
                 <div className="scale-[0.80] xl:scale-[0.95] 2xl:scale-[1.05] origin-top transition-transform duration-500 ease-out drop-shadow-2xl">
                     <A4Document
@@ -271,14 +304,11 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                     />
                 </div>
             </div>
-
         </div >
     );
 
-    // 📱 โซนสำหรับ Mobile
     const renderMobileView = () => (
         <div className="w-full flex flex-col min-h-screen pb-24 relative bg-[#f8f7f4]">
-
             <FloatingMenu
                 isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} activePanel={activePanel} setActivePanel={setActivePanel}
                 activeField={activeField} fieldLabels={fieldLabels} docData={docData} handleInputChange={handleInputChange}
@@ -289,13 +319,11 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                 handleExportWord={handleExportWord}
             />
 
-            {/* 🔴 ตกแต่งชื่อเว็บมือถือให้ล้อตาม Desktop */}
             <div className="pt-[100px] pb-[40px] px-4 flex flex-col items-center w-full relative z-20">
                 <p className="text-[9px] tracking-[0.4em] text-gray-500 font-semibold uppercase mb-2">Work Log for me</p>
                 <h1 className="text-[36px] font-black tracking-tight mb-6 text-[#1d1d1f] text-center leading-[1.1]">
                     <span className="font-light tracking-tight">Daily Work</span>
                 </h1>
-
                 <TaskInputBar
                     isMobile={true}
                     taskInput={taskInput} setTaskInput={setTaskInput}
@@ -305,8 +333,6 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
             </div>
 
             <main className="relative z-10 bg-white/90 backdrop-blur-md rounded-t-[40px] shadow-[0_-20px_40px_rgba(0,0,0,0.05)] border-t border-white/50 flex-1 w-full pt-8 px-4 pb-10">
-
-                {/* 1. ปุ่มกดเปิดเอกสาร (แก้ให้คลิกแล้วเปิด Modal) */}
                 <div className="max-w-[500px] mx-auto mb-6">
                     <button
                         onClick={() => setIsMobilePreviewOpen(true)}
@@ -316,7 +342,6 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                     </button>
                 </div>
 
-                {/* 2. Task List (เอาเงื่อนไขซ่อน/แสดงออก ให้มันโชว์ตลอดเวลา) */}
                 <div className="max-w-[500px] mx-auto flex flex-col gap-3">
                     <div className="text-center text-gray-500 text-[12px] font-semibold mb-1 uppercase tracking-widest">-- Task List --</div>
                     {pages.length === 0 || pages.every(p => p.length === 0) ? (
@@ -336,42 +361,24 @@ export default function WorkLog() { // เปลี่ยนชื่อจา�
                 </div>
             </main>
 
-            {/* 3. 🌟 โค้ด Modal หน้าต่างเด้งพรีวิวเอกสาร (ดีไซน์ใหม่ ไร้กรอบ ขยายใหญ่ เลื่อนได้พอดี) */}
             {isMobilePreviewOpen && (
                 <div className="fixed inset-0 z-[1000] flex flex-col items-center bg-black/85 backdrop-blur-sm animate-modal-pop overflow-hidden">
-
-                    {/* ปุ่ม ✕ ลอยอยู่มุมขวาบนเด่นๆ */}
                     <button
                         onClick={() => setIsMobilePreviewOpen(false)}
                         className="absolute top-4 right-4 z-[1010] w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 transition-all active:scale-90 shadow-lg"
                     >
                         <span className="text-xl leading-none -mt-0.5">✕</span>
                     </button>
-
-                    {/* พื้นที่แสดงเอกสาร (ระบบ Scroll เลื่อนขึ้น-ลงได้) */}
                     <div className="flex-1 w-full overflow-y-auto overflow-x-hidden pt-20 pb-32 flex justify-center items-start custom-scrollbar">
-
-                        {/* 🔴 กล่องครอบที่ล็อคความสูง-กว้างให้เท่ากับขนาด 48% เป๊ะๆ (แก้ปัญหาเลื่อนทะลุ) */}
-                        <div
-                            className="relative shadow-2xl bg-white"
-                            style={{ width: 'calc(210mm * 0.48)', height: 'calc(297mm * 0.48)' }}
-                        >
-                            {/* กระดาษ A4 ถูกจับให้ชิดซ้ายบน (origin-top-left) เพื่อไม่ให้ตำแหน่งเพี้ยนเวลาใส่กล่องครอบ */}
+                        <div className="relative shadow-2xl bg-white" style={{ width: 'calc(210mm * 0.48)', height: 'calc(297mm * 0.48)' }}>
                             <div className="absolute top-0 left-0 transform scale-[0.48] origin-top-left">
                                 <A4Document
-                                    currentPage={currentPage}
-                                    pages={pages}
-                                    docData={docData}
-                                    handleTextClick={handleTextClick}
-                                    handleTaskClick={handleTaskClick}
-                                    handleDeleteTask={handleDeleteTask}
+                                    currentPage={currentPage} pages={pages} docData={docData}
+                                    handleTextClick={handleTextClick} handleTaskClick={handleTaskClick} handleDeleteTask={handleDeleteTask}
                                 />
                             </div>
                         </div>
-
                     </div>
-
-                    {/* ปุ่มเปลี่ยนหน้า (ลอยอยู่ด้านล่างสุดของจอ) */}
                     {pages.length > 1 && (
                         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex justify-center items-center gap-6 py-2 px-6 bg-black/60 backdrop-blur-md border border-white/20 rounded-full z-10 shadow-xl">
                             <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className={`p-2 rounded-full transition-all ${currentPage === 0 ? 'text-gray-500' : 'text-white hover:bg-white/20 active:scale-90'}`}><ChevronLeft size={20} /></button>

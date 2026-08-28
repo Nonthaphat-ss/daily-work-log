@@ -2,16 +2,33 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ColorBends from '../components/ColorBends';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function MainCarousel() {
     const navigate = useNavigate();
 
-    //  ตัวแปรเช็ค Responsive
+    const { currentUser, login, logout } = useAuth();
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+
+    const handleLoginSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await login(loginEmail, loginPassword);
+            setShowLoginModal(false);
+            alert("เข้าสู่ระบบเรียบร้อย ");
+        } catch (error) {
+            alert("เข้าสู่ระบบล้มเหลว: " + error.message);
+        }
+    };
+
+    // ตัวแปรเช็ค Responsive
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     const images = import.meta.glob('../assets/torii/*.{png,jpg,jpeg}', { eager: true });
 
-    //  ข้อมูลการ์ด 10 ใบ
+    // ข้อมูลการ์ด 10 ใบ
     const cards = [
         { uid: 0, title: 'Daily Work', subtitle: 'ระบบบันทึกงานประจำวัน', path: '/work-log', img: images['../assets/torii/Gate1.jpg']?.default },
         { uid: 1, title: 'Notes Board', subtitle: 'กระดานโน้ตแปะไอเดีย', path: '/notes', img: images['../assets/torii/Gate2.jpg']?.default },
@@ -23,13 +40,12 @@ export default function MainCarousel() {
         { uid: 7, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate8.jpg']?.default },
         { uid: 8, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: images['../assets/torii/Gate9.jpg']?.default },
         { uid: 9, title: 'Coming Soon', subtitle: 'รออัปเดตฟีเจอร์ใหม่', path: '#', img: 'https://images.unsplash.com/photo-1620121692029-d088224ddc74?auto=format&fit=crop&w=800&q=80' }
-        //https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80 mock up img
     ];
 
     const totalCards = cards.length;
     const angleStep = 360 / totalCards;
 
-    //  State สำหรับ Desktop (ล้อหมุนวงกลม)
+    // State สำหรับ Desktop
     const [carouselAngle, setCarouselAngle] = useState(0);
     const targetAngleRef = useRef(0);
     const currentAngleRef = useRef(0);
@@ -38,26 +54,23 @@ export default function MainCarousel() {
     const startXRef = useRef(0);
     const startAngleRef = useRef(0);
 
-    //  State สำหรับ Mobile (กองการ์ด)
+    // State สำหรับ Mobile
     const [mobileIndex, setMobileIndex] = useState(0);
     const mobileStartXRef = useRef(0);
 
-    //  State สำหรับ Intro & Typing
+    // State สำหรับ Intro
     const [introProgress, setIntroProgress] = useState(0);
     const [isIntroDone, setIsIntroDone] = useState(false);
-    const isIntroDoneRef = useRef(false); //  แกับัคล้อไม่หมุน: เพิ่ม Ref เพื่อให้ Animation Loop อ่านค่าได้
+    const isIntroDoneRef = useRef(false);
 
     const [displayedText, setDisplayedText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
-    //  คำนวณหา activeIndex
     let normalizedAngle = carouselAngle % 360;
     if (normalizedAngle > 0) normalizedAngle -= 360;
     const activeIndex = Math.round(Math.abs(normalizedAngle) / angleStep) % totalCards;
-
     const activeTitle = cards[activeIndex].title;
 
-    //  อนิเมชันคลี่การ์ดตอนโหลดเว็บ
     useEffect(() => {
         let start = null;
         const duration = 2000;
@@ -71,22 +84,18 @@ export default function MainCarousel() {
                 requestAnimationFrame(step);
             } else {
                 setIsIntroDone(true);
-                isIntroDoneRef.current = true; //  อัปเดต Ref ให้ Loop รู้ว่าคลี่เสร็จแล้ว
+                isIntroDoneRef.current = true;
             }
         };
         requestAnimationFrame(step);
     }, []);
 
-    //  อนิเมชันพิมพ์ข้อความ
     useEffect(() => {
-        if (!isIntroDone) return; // รอคลี่พัดเสร็จก่อน
-
+        if (!isIntroDone) return;
         setIsTyping(true);
         let i = 0;
-        const speed = 60; // ความเร็วการพิมพ์
-
+        const speed = 60;
         const typingInterval = setInterval(() => {
-            // 🔧 แก้บัคตัวอักษรหาย: ใช้การตัดคำ (substring) แทนการต่อคำ ป้องกัน State ตีกัน
             setDisplayedText(activeTitle.substring(0, i + 1));
             i++;
             if (i >= activeTitle.length) {
@@ -94,7 +103,6 @@ export default function MainCarousel() {
                 setIsTyping(false);
             }
         }, speed);
-
         return () => clearInterval(typingInterval);
     }, [activeTitle, isIntroDone]);
 
@@ -104,12 +112,10 @@ export default function MainCarousel() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // ⏱ แอนิเมชันสำหรับ Desktop หมุนอัตโนมัติ
     useEffect(() => {
         let animationFrameId;
         const animate = () => {
             if (!isMobile) {
-                // 🔧 แก้บัคล้อไม่หมุน: ใช้ isIntroDoneRef.current แทน State 
                 if (isIntroDoneRef.current && !isDraggingRef.current && !isHoveredRef.current) {
                     targetAngleRef.current -= 0.15;
                 }
@@ -122,9 +128,6 @@ export default function MainCarousel() {
         return () => cancelAnimationFrame(animationFrameId);
     }, [isMobile]);
 
-    // --------------------------------------------------------
-    // Event สำหรับ Desktop (ลากหมุนวงกลม)
-    // --------------------------------------------------------
     const handleStart = (clientX) => {
         isDraggingRef.current = true;
         startXRef.current = clientX;
@@ -137,18 +140,13 @@ export default function MainCarousel() {
     };
     const handleEnd = () => { isDraggingRef.current = false; };
 
-    // --------------------------------------------------------
-    //  Event สำหรับ Mobile (ปัดกองการ์ด)
-    // --------------------------------------------------------
-    const handleMobileStart = (clientX) => {
-        mobileStartXRef.current = clientX;
-    };
+    const handleMobileStart = (clientX) => { mobileStartXRef.current = clientX; };
     const handleMobileEnd = (clientX) => {
         const deltaX = clientX - mobileStartXRef.current;
         if (deltaX < -40) {
-            setMobileIndex((prev) => (prev + 1) % totalCards); // ปัดซ้าย
+            setMobileIndex((prev) => (prev + 1) % totalCards);
         } else if (deltaX > 40) {
-            setMobileIndex((prev) => (prev - 1 + totalCards) % totalCards); // ปัดขวา
+            setMobileIndex((prev) => (prev - 1 + totalCards) % totalCards);
         }
     };
 
@@ -166,7 +164,7 @@ export default function MainCarousel() {
         }
     };
 
-    const orbitRadius = 580; // ความกว้างวงกลม Desktop
+    const orbitRadius = 580;
 
     return (
         <div
@@ -181,21 +179,17 @@ export default function MainCarousel() {
             onTouchEnd={(e) => isMobile ? handleMobileEnd(e.changedTouches[0].clientX) : handleEnd()}
         >
 
-            {/*  พื้นหลัง ColorBends */}
+            {/* พื้นหลัง ColorBends */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <ColorBends
                     colors={['#FFB6C1', '#A0C4FF', '#E0BBE4']}
-                    transparent={true}
-                    speed={0}
-                    mouseInfluence={0}
-                    iterations={1}
-                    noise={0.05}
+                    transparent={true} speed={0} mouseInfluence={0} iterations={1} noise={0.05}
                 />
             </div>
 
             {!isMobile ? (
                 <>
-                    {/*  โซนล้อหมุน (Desktop) */}
+                    {/* โซนล้อหมุน (Desktop) */}
                     <div
                         className="absolute top-[85%] left-1/2 w-0 h-0 z-10 pointer-events-none"
                         style={{ transform: `rotate(${carouselAngle}deg)` }}
@@ -230,9 +224,8 @@ export default function MainCarousel() {
                         })}
                     </div>
 
-                    {/*  โซนข้อความหลัก (Desktop) */}
+                    {/* โซนข้อความหลัก (Desktop) */}
                     <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center w-full max-w-4xl px-6 pointer-events-none">
-
                         <div className="text-center w-full pointer-events-auto mt-15">
                             <h1 className="text-[52px] font-serif text-[#1d1d1f] tracking-tight mb-4 drop-shadow-sm leading-[1.1] min-h-[120px]">
                                 {displayedText}
@@ -256,9 +249,19 @@ export default function MainCarousel() {
                                 <p className="text-[12px] text-gray-400 leading-relaxed">ตรวจสอบและติดตามสถานะงานได้ทันที</p>
                                 <div className="absolute right-[-24px] top-1/2 -translate-y-1/2 w-[1px] h-12 bg-gray-200"></div>
                             </div>
-                            <div className="text-center">
-                                <h3 className="text-[#1d1d1f] font-serif font-bold text-lg mb-2">Secure & Reliable</h3>
-                                <p className="text-[12px] text-gray-400 leading-relaxed">มั่นใจความถูกต้องและปลอดภัยของข้อมูล</p>
+                            <div
+                                className="text-center cursor-pointer hover:opacity-70 transition-opacity"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    currentUser ? logout() : setShowLoginModal(true);
+                                }}
+                            >
+                                <h3 className="text-[#1d1d1f] font-serif font-bold text-lg mb-2">
+                                    {currentUser ? "Connected to Cloud" : "Secure & Reliable"}
+                                </h3>
+                                <p className="text-[12px] text-gray-400 leading-relaxed">
+                                    {currentUser ? "เข้าสู่ระบบในฐานะ Admin แล้ว (คลิกเพื่อออก)" : "มั่นใจความถูกต้องและปลอดภัยของข้อมูล"}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -266,7 +269,7 @@ export default function MainCarousel() {
 
             ) : (
 
-                /*  โซนจอมือถือ (กองการ์ด) */
+                /* โซนจอมือถือ (กองการ์ด) */
                 <>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pt-8 z-20 pointer-events-none">
                         <div className="relative w-[260px] h-[360px] pointer-events-auto mt-[-40px]">
@@ -319,12 +322,33 @@ export default function MainCarousel() {
                             <p className="text-gray-500 font-medium text-sm transition-all duration-300 max-w-[250px] mx-auto">
                                 {cards[mobileIndex].subtitle}
                             </p>
-                            <p className="text-gray-400 font-semibold text-[11px] mt-8 tracking-[0.2em] uppercase">
-                                ← Swipe to explore →
+                            <p
+                                className="text-gray-400 font-semibold text-[11px] mt-8 tracking-[0.2em] uppercase cursor-pointer hover:text-gray-600 transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    currentUser ? logout() : setShowLoginModal(true);
+                                }}
+                            >
+                                {currentUser ? "☁️ Cloud Connected (Tap to Logout)" : "← Swipe to explore → (Login)"}
                             </p>
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* 🔴 นำ Modal มาวางไว้นอกสุด เพื่อให้ฝั่ง Desktop แสดงผลได้ */}
+            {showLoginModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md">
+                    <form onSubmit={handleLoginSubmit} className="bg-white/90 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl w-[320px] flex flex-col gap-4 pointer-events-auto">
+                        <h2 className="text-xl font-bold text-center mb-2 text-[#1d1d1f]">System Access</h2>
+                        <input type="email" placeholder="Email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-black focus:outline-none focus:border-gray-500" required />
+                        <input type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-black focus:outline-none focus:border-gray-500" required />
+                        <div className="flex gap-2 mt-2">
+                            <button type="button" onClick={() => setShowLoginModal(false)} className="flex-1 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg transition-colors">Cancel</button>
+                            <button type="submit" className="flex-1 py-2 bg-[#1d1d1f] text-white font-bold hover:bg-black rounded-lg transition-colors">Login</button>
+                        </div>
+                    </form>
+                </div>
             )}
 
         </div>
