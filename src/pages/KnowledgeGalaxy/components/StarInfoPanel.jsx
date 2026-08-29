@@ -22,7 +22,7 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
         onUpdate(star.id, {
             title,
             content,
-            categoryIds: selectedCatIds
+            categoryIds: selectedCatIds.length > 0 ? selectedCatIds : star.categoryIds
         });
         setIsEditing(false);
     };
@@ -33,12 +33,11 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
         );
     };
 
-    const primaryCategory = categories.find(c => star.categoryIds?.includes(c.id));
+    const assignedCategories = categories.filter(c => star.categoryIds?.includes(c.id));
 
     return (
         <div className="w-full bg-black/90 backdrop-blur-xl border-t border-white/15 text-white flex flex-col md:flex-row transition-all duration-300">
-
-            {/* ฝั่งซ้าย: ข้อมูลพิกัดและดาราศาสตร์ (Astronomical Coordinates) */}
+            {/* ซ้าย: ข้อมูลพิกัด */}
             <div className="p-6 md:w-80 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between shrink-0">
                 <div>
                     <div className="flex items-center gap-2 mb-3">
@@ -69,28 +68,61 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
                 </div>
             </div>
 
-            {/* ส่วนกลาง: สรุปค่าประเภทและคลัสเตอร์ (Telemetry Metrics) */}
-            <div className="p-6 md:w-72 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-center shrink-0">
-                <div className="grid grid-cols-2 gap-y-4 font-mono text-xs">
-                    <div>
-                        <div className="text-[9px] text-amber-400 tracking-widest uppercase mb-1">TYPE</div>
-                        <div className="text-white uppercase font-sans font-medium">Stellar Node</div>
-                    </div>
+            {/* กลาง: แสดงหมวดหมู่ทั้งหมด หรือแก้ไขหมวดหมู่ */}
+            <div className="p-6 md:w-80 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-center shrink-0">
+                <div className="font-mono text-xs space-y-3">
                     <div>
                         <div className="text-[9px] text-amber-400 tracking-widest uppercase mb-1">PAYLOAD MASS</div>
                         <div className="text-white">{star.content ? star.content.length : 0} BYTES</div>
                     </div>
-                    <div className="col-span-2">
-                        <div className="text-[9px] text-amber-400 tracking-widest uppercase mb-1">CONSTELLATION / CLUSTER</div>
-                        <div className="flex items-center gap-1.5 text-white">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryCategory?.color || '#ffffff' }} />
-                            <span>{primaryCategory?.name || 'Unassigned'}</span>
+
+                    <div>
+                        <div className="text-[9px] text-amber-400 tracking-widest uppercase mb-1.5">
+                            {isEditing ? 'EDIT CLUSTERS' : 'ASSIGNED CLUSTERS'}
                         </div>
+
+                        {isEditing ? (
+                            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                                {categories.map(cat => {
+                                    const active = selectedCatIds.includes(cat.id);
+                                    return (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => handleCatToggle(cat.id)}
+                                            className={`text-[10px] px-2 py-1 border font-mono transition-all flex items-center gap-1.5 cursor-pointer select-none ${active
+                                                ? 'bg-white/15 text-white border-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
+                                                : 'bg-black/50 text-white/40 border-white/10 hover:border-white/25'
+                                                }`}
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                                            <span>{cat.name}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                                {assignedCategories.length > 0 ? (
+                                    assignedCategories.map(cat => (
+                                        <span
+                                            key={cat.id}
+                                            className="text-[10px] px-2 py-0.5 rounded border border-white/15 bg-white/5 flex items-center gap-1.5"
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                                            <span className="text-white/90 truncate">{cat.name}</span>
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-white/40 text-[10px]">Unassigned</span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* ฝั่งขวา: รายละเอียดเนื้อหาและปุ่มจัดการ (Content & Actions) */}
+            {/* ขวา: หัวข้อ เนื้อหา และปุ่ม Action */}
             <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
                     <div className="flex items-start justify-between gap-4 mb-2">
@@ -111,7 +143,7 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
                             {isEditing ? (
                                 <button
                                     onClick={handleSave}
-                                    className="p-1.5 bg-amber-400 text-black hover:bg-amber-300 transition-colors"
+                                    className="p-1.5 bg-amber-400 text-black hover:bg-amber-300 transition-colors cursor-pointer"
                                     title="Save Changes"
                                 >
                                     <Check size={16} />
@@ -119,7 +151,7 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
                             ) : (
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="p-1.5 text-white/60 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+                                    className="p-1.5 text-white/60 hover:text-white border border-white/10 hover:border-white/30 transition-colors cursor-pointer"
                                     title="Edit Node"
                                 >
                                     <Edit3 size={16} />
@@ -128,7 +160,7 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
 
                             <button
                                 onClick={() => onDelete(star.id)}
-                                className="p-1.5 text-red-400/80 hover:text-red-400 border border-red-500/20 hover:border-red-500/40 transition-colors"
+                                className="p-1.5 text-red-400/80 hover:text-red-400 border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
                                 title="Delete Node"
                             >
                                 <Trash2 size={16} />
@@ -136,7 +168,7 @@ export default function StarInfoPanel({ star, categories, onClose, onUpdate, onD
 
                             <button
                                 onClick={onClose}
-                                className="p-1.5 text-white/60 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+                                className="p-1.5 text-white/60 hover:text-white border border-white/10 hover:border-white/30 transition-colors cursor-pointer"
                                 title="Close Panel"
                             >
                                 <X size={16} />

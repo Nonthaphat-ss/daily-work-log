@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
+    "@react-three/postprocessing": "^3.1.1",
     "docxtemplater": "^3.69.0",
     "file-saver": "^2.0.5",
     "firebase": "^12.18.0",
@@ -19,6 +20,7 @@
     "lucide-react": "^1.23.0",
     "ogl": "^1.0.11",
     "pizzip": "^3.2.0",
+    "postprocessing": "^6.39.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-grid-layout": "^2.2.4",
