@@ -193,17 +193,16 @@ export default function WorkLog() {
                 .sort((a, b) => Number(a) - Number(b))
                 .map(day => {
                     const dayTasks = grouped[day];
-                    // ถ้ามีมากกว่า 1 รายการในวันนั้น ให้ใส่ขีด - นำหน้าทุกข้อความ
                     const formattedDesc = dayTasks.length > 1
                         ? dayTasks.map(desc => `- ${desc}`).join('\n')
                         : dayTasks[0];
 
                     return {
                         dayThai: toThaiNumber(day),
-                        description: formattedDesc
+                        description: formattedDesc,
+                        reportMonth: docData.reportMonth
                     };
                 });
-
             doc.render({ ...docData, tasks: exportTasks });
             const out = doc.getZip().generate({
                 type: 'blob',

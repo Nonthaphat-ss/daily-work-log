@@ -2,12 +2,12 @@ import { Trash2 } from 'lucide-react';
 import { toThaiNumber } from '../utils/dateUtils';
 
 export default function A4Document({
-    pages,
-    docData,
+    pages = [],
+    docData = {},
     handleTextClick,
     handleTaskClick,
     handleDeleteTask,
-    currentPage = 0 // 🔴 รับตัวแปรหน้าปัจจุบันมา
+    currentPage = 0
 }) {
     const editableClass = "whitespace-nowrap bg-white/40 backdrop-blur-md border border-white/60 shadow-[0_4px_10px_rgba(0,0,0,0.05)] px-2 py-0.5 rounded-lg cursor-pointer hover:bg-white/70 hover:shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 text-[#0066cc] font-medium";
 
